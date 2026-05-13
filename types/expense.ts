@@ -1,3 +1,10 @@
+export interface Attachment {
+  id: string;
+  name: string;
+  type: string; // MIME type
+  data: string; // base64 data URL
+}
+
 export interface Expense {
   id: string;
   name: string;
@@ -12,6 +19,8 @@ export interface Expense {
   kind?: "expense" | "income";  // defaults to "expense"
   categoryId?: string;
   subcategoryId?: string;
+  notes?: string;
+  attachments?: Attachment[];
   createdAt: string;
 }
 

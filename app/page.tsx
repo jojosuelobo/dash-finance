@@ -6,6 +6,7 @@ import { useCategories } from "@/hooks/useCategories";
 import ExpenseList from "@/components/ExpenseList";
 import AddExpenseModal from "@/components/AddExpenseModal";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+import EditScopeModal from "@/components/EditScopeModal";
 import ManageCategoriesModal from "@/components/ManageCategoriesModal";
 import { getDisplayExpenses, monthKey } from "@/lib/expenseFilter";
 import type { Expense } from "@/types/expense";
@@ -30,6 +31,11 @@ export default function Home() {
   const [addOpen, setAddOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Expense | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [pendingEdit, setPendingEdit] = useState<{
+    original: Expense;
+    formData: Omit<Expense, "id" | "createdAt">;
+  } | null>(null);
 
   const { expenses, addExpense, deleteExpense, updateExpense } = useExpenses();
   const { categories, addCategory, deleteCategory, addSubcategory, deleteSubcategory } = useCategories();
@@ -113,6 +119,75 @@ export default function Home() {
     if (!pendingDelete) return;
     deleteExpense(pendingDelete.id);
     setPendingDelete(null);
+  }
+
+  function needsEditScope(expense: Expense): boolean {
+    return (
+      (expense.type === "fixed" && expense.fixedMode === "unlimited") ||
+      (expense.kind === "income" && expense.type === "fixed")
+    );
+  }
+
+  function handleEditOpen(id: string) {
+    const expense = expenses.find((e) => e.id === id);
+    if (expense) setEditingExpense(expense);
+  }
+
+  function handleEditFormSubmit(data: Omit<Expense, "id" | "createdAt">) {
+    if (!editingExpense) return;
+    if (needsEditScope(editingExpense)) {
+      setPendingEdit({ original: editingExpense, formData: data });
+      setEditingExpense(null);
+    } else {
+      const { paidMonths: _pm, ...rest } = data;
+      updateExpense(editingExpense.id, rest);
+      setEditingExpense(null);
+    }
+  }
+
+  function adjustToViewMonth(dateStr?: string): string {
+    const day = dateStr ? dateStr.split("-")[2] : "01";
+    return `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${day}`;
+  }
+
+  function handleEditThisMonth() {
+    if (!pendingEdit) return;
+    const { original, formData } = pendingEdit;
+    const key = monthKey(viewYear, viewMonth);
+    updateExpense(original.id, {
+      excludedMonths: [...(original.excludedMonths ?? []), key],
+    });
+    const wasPaid = original.paidMonths?.includes(key) ?? false;
+    addExpense({
+      ...formData,
+      type: "one-time",
+      fixedMode: undefined,
+      installments: undefined,
+      dueDate: adjustToViewMonth(formData.dueDate),
+      paidMonths: wasPaid ? [key] : undefined,
+    });
+    setPendingEdit(null);
+  }
+
+  function handleEditFromHereForward() {
+    if (!pendingEdit) return;
+    const { original, formData } = pendingEdit;
+    const prev = prevMonth(viewMonth, viewYear);
+    updateExpense(original.id, { endDate: monthKey(prev.year, prev.month) });
+    addExpense({
+      ...formData,
+      dueDate: adjustToViewMonth(formData.dueDate),
+      paidMonths: undefined,
+    });
+    setPendingEdit(null);
+  }
+
+  function handleEditAll() {
+    if (!pendingEdit) return;
+    const { original, formData } = pendingEdit;
+    const { paidMonths: _pm, ...rest } = formData;
+    updateExpense(original.id, rest);
+    setPendingEdit(null);
   }
 
   return (
@@ -240,6 +315,7 @@ export default function Home() {
             expenses={incomeItems}
             onDelete={handleDelete}
             onTogglePaid={handleTogglePaid}
+            onEdit={handleEditOpen}
           />
         </section>
       )}
@@ -256,6 +332,7 @@ export default function Home() {
             categories={categories}
             onDelete={handleDelete}
             onTogglePaid={handleTogglePaid}
+            onEdit={handleEditOpen}
           />
         </section>
       )}
@@ -265,6 +342,26 @@ export default function Home() {
           onAdd={addExpense}
           onClose={() => setAddOpen(false)}
           categories={categories}
+        />
+      )}
+
+      {editingExpense && (
+        <AddExpenseModal
+          onAdd={handleEditFormSubmit}
+          onClose={() => setEditingExpense(null)}
+          categories={categories}
+          initialExpense={editingExpense}
+        />
+      )}
+
+      {pendingEdit && (
+        <EditScopeModal
+          expenseName={pendingEdit.original.name}
+          isIncome={pendingEdit.original.kind === "income"}
+          onEditThisMonth={handleEditThisMonth}
+          onEditFromHereForward={handleEditFromHereForward}
+          onEditAll={handleEditAll}
+          onClose={() => setPendingEdit(null)}
         />
       )}
 

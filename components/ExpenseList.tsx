@@ -10,6 +10,7 @@ interface Props {
   categories?: Category[];
   onDelete?: (id: string) => void;
   onTogglePaid?: (id: string) => void;
+  onEdit?: (id: string) => void;
   emptyMessage?: string;
 }
 
@@ -61,16 +62,18 @@ function FlatList({
   expenses,
   onDelete,
   onTogglePaid,
+  onEdit,
 }: {
   expenses: DisplayExpense[];
   onDelete?: (id: string) => void;
   onTogglePaid?: (id: string) => void;
+  onEdit?: (id: string) => void;
 }) {
   return (
     <ul className="flex flex-col gap-2">
       {expenses.map((e) => (
         <li key={e.id}>
-          <ExpenseCard expense={e} onDelete={onDelete} onTogglePaid={onTogglePaid} />
+          <ExpenseCard expense={e} onDelete={onDelete} onTogglePaid={onTogglePaid} onEdit={onEdit} />
         </li>
       ))}
     </ul>
@@ -82,6 +85,7 @@ export default function ExpenseList({
   categories,
   onDelete,
   onTogglePaid,
+  onEdit,
   emptyMessage,
 }: Props) {
   if (expenses.length === 0) {
@@ -95,7 +99,7 @@ export default function ExpenseList({
   if (!categories || categories.length === 0) {
     return (
       <div className="mt-4">
-        <FlatList expenses={expenses} onDelete={onDelete} onTogglePaid={onTogglePaid} />
+        <FlatList expenses={expenses} onDelete={onDelete} onTogglePaid={onTogglePaid} onEdit={onEdit} />
       </div>
     );
   }
@@ -105,7 +109,7 @@ export default function ExpenseList({
   if (groups.length === 1 && !groups[0].categoryId) {
     return (
       <div className="mt-4">
-        <FlatList expenses={expenses} onDelete={onDelete} onTogglePaid={onTogglePaid} />
+        <FlatList expenses={expenses} onDelete={onDelete} onTogglePaid={onTogglePaid} onEdit={onEdit} />
       </div>
     );
   }
@@ -143,6 +147,7 @@ export default function ExpenseList({
                         expense={{ ...e, categoryLabel: undefined }}
                         onDelete={onDelete}
                         onTogglePaid={onTogglePaid}
+                        onEdit={onEdit}
                       />
                     </li>
                   ))}

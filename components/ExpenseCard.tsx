@@ -4,9 +4,10 @@ interface Props {
   expense: DisplayExpense;
   onDelete?: (id: string) => void;
   onTogglePaid?: (id: string) => void;
+  onEdit?: (id: string) => void;
 }
 
-export default function ExpenseCard({ expense, onDelete, onTogglePaid }: Props) {
+export default function ExpenseCard({ expense, onDelete, onTogglePaid, onEdit }: Props) {
   const { isPaid, isOverdue } = expense;
   const isIncome = expense.kind === "income";
 
@@ -64,7 +65,7 @@ export default function ExpenseCard({ expense, onDelete, onTogglePaid }: Props) 
       : "text-zinc-900 dark:text-zinc-50";
 
   return (
-    <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors ${cardBg}`}>
+    <div className={`flex items-start gap-3 rounded-lg border px-4 py-3 transition-colors ${cardBg}`}>
       {/* Paid/received toggle */}
       <button
         onClick={() => onTogglePaid?.(expense.id)}
@@ -73,7 +74,7 @@ export default function ExpenseCard({ expense, onDelete, onTogglePaid }: Props) 
             ? isPaid ? "Marcar como não recebido" : "Marcar como recebido"
             : isPaid ? "Marcar como não paga" : "Marcar como paga"
         }
-        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${toggleBg}`}
+        className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${toggleBg}`}
       >
         {isPaid && (
           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -95,10 +96,46 @@ export default function ExpenseCard({ expense, onDelete, onTogglePaid }: Props) 
         {expense.categoryLabel && (
           <span className="text-xs text-zinc-400">{expense.categoryLabel}</span>
         )}
+        {expense.notes && (
+          <span className="text-xs text-zinc-400 line-clamp-2">{expense.notes}</span>
+        )}
+        {expense.attachments && expense.attachments.length > 0 && (
+          <div className="mt-0.5 flex flex-wrap gap-1">
+            {expense.attachments.map((att) => (
+              <div key={att.id} className="inline-flex items-center rounded bg-zinc-100 dark:bg-zinc-800">
+                <a
+                  href={att.data}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                  </svg>
+                  <span className="max-w-[96px] truncate">{att.name}</span>
+                </a>
+                <a
+                  href={att.data}
+                  download={att.name}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={`Baixar ${att.name}`}
+                  className="border-l border-zinc-200 px-1.5 py-0.5 text-zinc-400 hover:text-zinc-700 dark:border-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex items-center gap-3 flex-shrink-0 mt-0.5">
         {isIncome ? (
           <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">
             {expense.type === "fixed" ? "Mensal" : "Único"}
@@ -122,11 +159,23 @@ export default function ExpenseCard({ expense, onDelete, onTogglePaid }: Props) 
         <span className={`text-sm font-semibold ${valueColor}`}>
           {isIncome && !isPaid ? `+${formatted}` : formatted}
         </span>
+        {onEdit && (
+          <button
+            onClick={() => onEdit(expense.id)}
+            aria-label="Editar"
+            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </button>
+        )}
         {onDelete && (
           <button
             onClick={() => onDelete(expense.id)}
             aria-label="Deletar"
-            className="ml-1 rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
+            className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="3 6 5 6 21 6" />
