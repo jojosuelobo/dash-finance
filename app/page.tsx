@@ -37,6 +37,20 @@ export default function Home() {
   const viewIdx = viewYear * 12 + viewMonth;
 
   const displayExpenses = getDisplayExpenses(expenses, categories, viewYear, viewMonth, now);
+  const incomeItems = displayExpenses.filter((e) => e.kind === "income");
+  const expenseItems = displayExpenses.filter((e) => e.kind !== "income");
+  const hasBothKinds = incomeItems.length > 0 && expenseItems.length > 0;
+
+  const fmt = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  const totalIncome = incomeItems.reduce((s, e) => s + e.displayValue, 0);
+  const totalExpenses = expenseItems.reduce((s, e) => s + e.displayValue, 0);
+  const balance = totalIncome - totalExpenses;
+
+  const unpaidItems = expenseItems
+    .filter((e) => !e.isPaid)
+    .sort((a, b) => Number(b.isOverdue) - Number(a.isOverdue));
+  const totalUnpaid = unpaidItems.reduce((s, e) => s + e.displayValue, 0);
 
   function goBack() {
     const p = prevMonth(viewMonth, viewYear);
@@ -142,12 +156,109 @@ export default function Home() {
         </button>
       </div>
 
-      <ExpenseList
-        expenses={displayExpenses}
-        onDelete={handleDelete}
-        onTogglePaid={handleTogglePaid}
-        emptyMessage="Nenhuma despesa para este mês."
-      />
+      {displayExpenses.length > 0 && (
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <p className="text-xs text-zinc-400">Receitas</p>
+            <p className="mt-0.5 text-sm font-semibold text-teal-600 dark:text-teal-400">
+              {fmt(totalIncome)}
+            </p>
+          </div>
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <p className="text-xs text-zinc-400">Despesas</p>
+            <p className="mt-0.5 text-sm font-semibold text-red-500 dark:text-red-400">
+              {fmt(totalExpenses)}
+            </p>
+          </div>
+          <div
+            className={`rounded-lg border p-3 ${
+              balance >= 0
+                ? "border-green-100 bg-green-50 dark:border-green-900/40 dark:bg-green-950/30"
+                : "border-red-100 bg-red-50 dark:border-red-900/40 dark:bg-red-950/30"
+            }`}
+          >
+            <p className="text-xs text-zinc-400">Saldo</p>
+            <p
+              className={`mt-0.5 text-sm font-semibold ${
+                balance >= 0
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-500 dark:text-red-400"
+              }`}
+            >
+              {fmt(balance)}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {unpaidItems.length > 0 && (
+        <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+              A pagar
+            </span>
+            <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+              {fmt(totalUnpaid)}
+            </span>
+          </div>
+          <ul className="mt-2 flex flex-col gap-1">
+            {unpaidItems.map((e) => (
+              <li key={e.id} className="flex items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  {e.isOverdue ? (
+                    <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-500" />
+                  ) : (
+                    <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+                  )}
+                  <span className={`truncate text-xs ${e.isOverdue ? "text-red-600 dark:text-red-400" : "text-zinc-600 dark:text-zinc-300"}`}>
+                    {e.name}
+                  </span>
+                </span>
+                <span className="flex-shrink-0 text-xs text-zinc-400">
+                  {fmt(e.displayValue)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {displayExpenses.length === 0 && (
+        <p className="mt-8 text-center text-sm text-zinc-400">
+          Nenhum lançamento para este mês.
+        </p>
+      )}
+
+      {incomeItems.length > 0 && (
+        <section>
+          {hasBothKinds && (
+            <h2 className="mt-6 mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+              Receitas
+            </h2>
+          )}
+          <ExpenseList
+            expenses={incomeItems}
+            onDelete={handleDelete}
+            onTogglePaid={handleTogglePaid}
+          />
+        </section>
+      )}
+
+      {expenseItems.length > 0 && (
+        <section>
+          {hasBothKinds && (
+            <h2 className="mt-6 mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+              Despesas
+            </h2>
+          )}
+          <ExpenseList
+            expenses={expenseItems}
+            categories={categories}
+            onDelete={handleDelete}
+            onTogglePaid={handleTogglePaid}
+          />
+        </section>
+      )}
 
       {addOpen && (
         <AddExpenseModal
