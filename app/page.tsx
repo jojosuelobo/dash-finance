@@ -7,7 +7,8 @@ import ExpenseList from "@/components/ExpenseList";
 import AddExpenseModal from "@/components/AddExpenseModal";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import ManageCategoriesModal from "@/components/ManageCategoriesModal";
-import type { DisplayExpense, Expense } from "@/types/expense";
+import { getDisplayExpenses, monthKey } from "@/lib/expenseFilter";
+import type { Expense } from "@/types/expense";
 
 const MONTHS = [
   "JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO",
@@ -20,10 +21,6 @@ function prevMonth(month: number, year: number) {
 
 function nextMonth(month: number, year: number) {
   return month === 11 ? { month: 0, year: year + 1 } : { month: month + 1, year };
-}
-
-function monthKey(year: number, month: number): string {
-  return `${year}-${String(month + 1).padStart(2, "0")}`;
 }
 
 export default function Home() {
@@ -39,63 +36,7 @@ export default function Home() {
 
   const viewIdx = viewYear * 12 + viewMonth;
 
-  const displayExpenses: DisplayExpense[] = expenses
-    .filter((e) => {
-      const anchor = e.dueDate ?? e.createdAt;
-      const ref = new Date(anchor);
-      const ry = ref.getFullYear();
-      const rm = ref.getMonth();
-      const startIdx = ry * 12 + rm;
-
-      if (e.type === "one-time") {
-        return ry === viewYear && rm === viewMonth;
-      }
-
-      // Skip excluded months
-      if (e.excludedMonths?.includes(monthKey(viewYear, viewMonth))) return false;
-
-      // Respect endDate (YYYY-MM, 1-based month)
-      if (e.endDate) {
-        const [ey, em] = e.endDate.split("-").map(Number);
-        const endIdx = ey * 12 + (em - 1);
-        if (viewIdx > endIdx) return false;
-      }
-
-      if (e.fixedMode === "installments" && e.installments) {
-        return viewIdx >= startIdx && viewIdx < startIdx + e.installments;
-      }
-
-      return startIdx <= viewIdx;
-    })
-    .map((e) => {
-      const key = monthKey(viewYear, viewMonth);
-      const isPaid = e.paidMonths?.includes(key) ?? false;
-      const dueDay = e.dueDate ? parseInt(e.dueDate.split("-")[2]) : undefined;
-      const isOverdue =
-        (e.kind ?? "expense") === "expense" &&
-        !isPaid &&
-        dueDay !== undefined &&
-        new Date(viewYear, viewMonth, dueDay) < now;
-      const cat = categories.find((c) => c.id === e.categoryId);
-      const sub = cat?.subcategories.find((s) => s.id === e.subcategoryId);
-      const categoryLabel = cat ? (sub ? `${cat.name} > ${sub.name}` : cat.name) : undefined;
-
-      if (e.type === "fixed" && e.fixedMode === "installments" && e.installments) {
-        const anchor = e.dueDate ?? e.createdAt;
-        const ref = new Date(anchor);
-        const startIdx = ref.getFullYear() * 12 + ref.getMonth();
-        const num = viewIdx - startIdx + 1;
-        return {
-          ...e,
-          displayValue: e.value / e.installments,
-          installmentInfo: `${num}/${e.installments}`,
-          isPaid,
-          isOverdue,
-          categoryLabel,
-        };
-      }
-      return { ...e, displayValue: e.value, isPaid, isOverdue, categoryLabel };
-    });
+  const displayExpenses = getDisplayExpenses(expenses, categories, viewYear, viewMonth, now);
 
   function goBack() {
     const p = prevMonth(viewMonth, viewYear);
@@ -112,7 +53,7 @@ export default function Home() {
   function handleDelete(id: string) {
     const expense = expenses.find((e) => e.id === id);
     if (!expense) return;
-    if (expense.type === "one-time" || expense.fixedMode === "installments" || expense.kind === "income") {
+    if (expense.type === "one-time" || expense.fixedMode === "installments") {
       deleteExpense(id);
     } else {
       setPendingDelete(expense);

@@ -19,37 +19,49 @@ export default function ExpenseCard({ expense, onDelete, onTogglePaid }: Props) 
     ? parseInt(expense.dueDate.split("-")[2])
     : undefined;
 
-  const cardBg = isPaid
-    ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30"
-    : isOverdue
-    ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30"
-    : isIncome
-    ? "border-teal-200 bg-teal-50 dark:border-teal-800 dark:bg-teal-950/30"
-    : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
+  const cardBg =
+    isPaid && isIncome
+      ? "border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30"
+      : isPaid
+      ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30"
+      : isOverdue
+      ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30"
+      : isIncome
+      ? "border-teal-200 bg-teal-50 dark:border-teal-800 dark:bg-teal-950/30"
+      : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900";
 
-  const toggleBg = isPaid
-    ? "border-green-500 bg-green-500 text-white"
-    : isOverdue
-    ? "border-red-400 hover:border-green-400 dark:border-red-500 dark:hover:border-green-500"
-    : isIncome
-    ? "border-teal-400 hover:border-green-400 dark:border-teal-500 dark:hover:border-green-500"
-    : "border-zinc-300 hover:border-green-400 dark:border-zinc-600 dark:hover:border-green-500";
+  const toggleBg =
+    isPaid && isIncome
+      ? "border-blue-500 bg-blue-500 text-white"
+      : isPaid
+      ? "border-green-500 bg-green-500 text-white"
+      : isOverdue
+      ? "border-red-400 hover:border-green-400 dark:border-red-500 dark:hover:border-green-500"
+      : isIncome
+      ? "border-teal-400 hover:border-blue-400 dark:border-teal-500 dark:hover:border-blue-500"
+      : "border-zinc-300 hover:border-green-400 dark:border-zinc-600 dark:hover:border-green-500";
 
-  const nameColor = isPaid
-    ? "text-green-800 dark:text-green-300"
-    : isOverdue
-    ? "text-red-700 dark:text-red-300"
-    : isIncome
-    ? "text-teal-800 dark:text-teal-200"
-    : "text-zinc-900 dark:text-zinc-50";
+  const nameColor =
+    isPaid && isIncome
+      ? "text-blue-800 dark:text-blue-300"
+      : isPaid
+      ? "text-green-800 dark:text-green-300"
+      : isOverdue
+      ? "text-red-700 dark:text-red-300"
+      : isIncome
+      ? "text-teal-800 dark:text-teal-200"
+      : "text-zinc-900 dark:text-zinc-50";
 
-  const valueColor = isPaid
-    ? "text-green-700 dark:text-green-400"
-    : isOverdue
-    ? "text-red-600 dark:text-red-400"
-    : isIncome
-    ? "text-teal-700 dark:text-teal-300"
-    : "text-zinc-900 dark:text-zinc-50";
+  const valueColor =
+    isPaid && isIncome
+      ? "text-blue-700 dark:text-blue-400"
+      : isPaid
+      ? "text-green-700 dark:text-green-400"
+      : isOverdue
+      ? "text-red-600 dark:text-red-400"
+      : isIncome
+      ? "text-teal-700 dark:text-teal-300"
+      : "text-zinc-900 dark:text-zinc-50";
 
   return (
     <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors ${cardBg}`}>

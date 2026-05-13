@@ -222,7 +222,7 @@ export default function AddExpenseModal({ onAdd, onClose, categories }: Props) {
               <div>
                 <label className="mb-2 block text-xs font-medium text-zinc-600 dark:text-zinc-400">Tipo</label>
                 <ToggleGroup
-                  options={[{ value: "monthly", label: "Mensal" }, { value: "one-time", label: "Único" }]}
+                  options={[{ value: "one-time", label: "Único" }, { value: "monthly", label: "Mensal" }]}
                   value={incomeType}
                   onChange={(v) => setIncomeType(v as "one-time" | "monthly")}
                 />

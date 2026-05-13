@@ -17,11 +17,13 @@ export default function DeleteConfirmModal({
   onDeleteAll,
   onClose,
 }: Props) {
+  const isIncome = expense.kind === "income";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-zinc-900">
         <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-          Excluir despesa fixa
+          {isIncome ? "Excluir receita mensal" : "Excluir despesa fixa"}
         </h2>
         <p className="mt-1 mb-5 text-sm text-zinc-500 dark:text-zinc-400">
           Como deseja excluir{" "}
