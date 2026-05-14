@@ -2,156 +2,257 @@
 
 # Dash Finance
 
-## Visão Geral
+## Overview
 
-Dashboard pessoal de controle financeiro para acompanhar despesas e receitas mês a mês. Interface em português brasileiro. Aplicação 100% client-side — sem backend, sem banco de dados, sem autenticação. Toda a persistência é feita via `localStorage` do navegador.
+Personal finance dashboard to track expenses and income month by month. Interface in Brazilian Portuguese. Multi-user support with server-side authentication. All data is persisted in PostgreSQL.
 
-## Stack Técnica
+## Tech Stack
 
-| Tecnologia | Versão | Uso |
+| Technology | Version | Purpose |
 |---|---|---|
 | Next.js | 16.2.6 | Framework (App Router) |
 | React | 19.2.4 | UI |
-| TypeScript | 5 | Tipagem |
-| Tailwind CSS | 4 | Estilização |
+| TypeScript | 5 | Types |
+| Tailwind CSS | 4 | Styling |
+| PostgreSQL | 16 | Database (Docker, port 5433) |
+| Prisma | 7 | ORM |
+| iron-session | 8 | Session via HTTP-only cookie |
+| bcryptjs | — | Password hashing |
 
-## Estrutura do Projeto
+## Project Structure
 
 ```
 app/
-  layout.tsx              # Root layout (Header + max-w-4xl wrapper)
-  page.tsx                # Página principal — toda a lógica do dashboard
-  globals.css             # Import do Tailwind + variáveis de tema
+  layout.tsx                    # Root layout (Header + AuthProvider)
+  page.tsx                      # Main dashboard — all core logic
+  globals.css                   # Tailwind imports
+  fundos/page.tsx               # Investment tracking page
+  relatorio/page.tsx            # Report page with charts
+  api/
+    auth/
+      register/route.ts         # POST — create user + set session cookie
+      login/route.ts            # POST — validate credentials + set session cookie
+      logout/route.ts           # POST — destroy session cookie
+      me/route.ts               # GET — return current session user
+    expenses/
+      route.ts                  # GET (list), POST (create)
+      [id]/route.ts             # PATCH (update), DELETE
+    categories/
+      route.ts                  # GET (list), POST (create)
+      [id]/route.ts             # DELETE
+      [id]/subcategories/route.ts         # POST (add subcategory)
+      [id]/subcategories/[subId]/route.ts # DELETE
+    contributions/
+      route.ts                  # GET (list), POST (create)
+      [id]/route.ts             # DELETE
 
 components/
-  Header.tsx              # Barra de navegação com o nome do app
-  ExpenseList.tsx         # Lista de cards de despesas/receitas
-  ExpenseCard.tsx         # Card individual com status visual e ações
-  AddExpenseModal.tsx     # Modal de adição de despesa ou receita
-  DeleteConfirmModal.tsx  # Confirmação de exclusão com 3 opções
-  ManageCategoriesModal.tsx # CRUD de categorias e subcategorias
+  Header.tsx                    # Nav bar with links and logout button
+  ExpenseList.tsx               # List of expense/income cards with grouping
+  ExpenseCard.tsx               # Individual card with visual status and actions
+  AddExpenseModal.tsx           # Add/edit expense or income modal
+  DeleteConfirmModal.tsx        # Delete confirmation with 3 scope options
+  EditScopeModal.tsx            # Scope selector for editing recurring expenses
+  ManageCategoriesModal.tsx     # Category/subcategory CRUD
+  LoginForm.tsx                 # Login/register form
+  AddContributionModal.tsx      # Investment contribution modal
 
 hooks/
-  useExpenses.ts          # Estado de despesas + persistência no localStorage
-  useCategories.ts        # Estado de categorias + persistência no localStorage
+  useExpenses.ts                # Expense state — fetches from /api/expenses
+  useCategories.ts              # Category state — fetches from /api/categories
+  useContributions.ts           # Contribution state — fetches from /api/contributions
+
+contexts/
+  AuthContext.tsx               # Auth state — fetches from /api/auth/*
+
+lib/
+  db.ts                         # PrismaClient singleton (with @prisma/adapter-pg)
+  session.ts                    # getSession() via iron-session
+  expenseFilter.ts              # Monthly filtering logic (pure client-side)
+  auth.ts                       # Legacy file — no longer imported, safe to delete
 
 types/
-  expense.ts              # Interfaces Expense e DisplayExpense
-  category.ts             # Interfaces Category e Subcategory
+  expense.ts                    # Expense and DisplayExpense interfaces
+  category.ts                   # Category and Subcategory interfaces
+  contribution.ts               # Contribution interface
+
+prisma/
+  schema.prisma                 # Database schema
+  migrations/                   # Migration history
+prisma.config.ts                # Prisma CLI config (datasource URL for migrations)
+docker-compose.yml              # PostgreSQL service definition
 ```
 
-## Modelos de Dados
+## Database
+
+PostgreSQL runs in Docker on port **5433** (5432 is used by a local Postgres instance).
+
+### Connection
+
+| Field | Value |
+|---|---|
+| Host | `localhost` |
+| Port | `5433` |
+| Database | `dash_finance` |
+| Username | `dash` |
+| Password | `dash` |
+
+### Schema (`prisma/schema.prisma`)
+
+**User**
+```
+id           String   @id @default(uuid())
+username     String   @unique
+passwordHash String
+createdAt    DateTime @default(now())
+```
+
+**Expense**
+```
+id             String      @id @default(uuid())
+userId         String      → User (cascade delete)
+name           String
+value          Float
+type           ExpenseType  (fixed | one_time)
+fixedMode      FixedMode?   (unlimited | installments)
+installments   Int?
+dueDate        String?      YYYY-MM-DD
+endDate        String?      YYYY-MM — last month to show (inclusive)
+excludedMonths String[]     months to skip: ["YYYY-MM"]
+paidMonths     String[]     months marked as paid
+kind           ExpenseKind  (expense | income)
+categoryId     String?
+subcategoryId  String?
+notes          String?
+attachments    Json         Attachment[] stored as JSON
+createdAt      DateTime
+```
+
+**Category**
+```
+id        String   @id @default(uuid())
+userId    String   → User (cascade delete)
+name      String
+createdAt DateTime
+```
+
+**Subcategory**
+```
+id         String → Category (cascade delete)
+categoryId String
+name       String
+```
+
+**Contribution**
+```
+id         String               @id @default(uuid())
+userId     String               → User (cascade delete)
+date       String               YYYY-MM-DD
+value      Float
+kind       ContributionKind     (aporte | retirada)
+type       ContributionType     (cripto | investimento)
+subtype    ContributionSubtype? (bitcoin | etc | outros)
+quantidade Float?
+cotacao    Float?
+createdAt  DateTime
+```
+
+### Important: Prisma 7 breaking changes
+
+- `datasource` in `schema.prisma` has **no `url`** — it goes in `prisma.config.ts`
+- `PrismaClient` requires an `adapter` — uses `PrismaPg` from `@prisma/adapter-pg`
+- `prisma.config.ts` loads dotenv explicitly because the CLI doesn't read `.env` before the config file
+- The `attachments` field is `Json` in Prisma — cast with `as unknown as` to the TypeScript type
+- `ExpenseType` enum: `one_time` in DB ↔ `"one-time"` in TypeScript (conversion in API routes)
+
+## Data Models
 
 ### `Expense` (`types/expense.ts`)
 
 ```typescript
 interface Expense {
-  id: string;                              // UUID gerado com crypto.randomUUID()
+  id: string;
   name: string;
   value: number;
-  type: "fixed" | "one-time";             // Recorrente ou avulsa
-  fixedMode?: "unlimited" | "installments"; // Como a fixa recorre
-  installments?: number;                   // Quantidade de parcelas
-  dueDate?: string;                        // Formato YYYY-MM-DD
-  endDate?: string;                        // Formato YYYY-MM (mês final inclusivo)
-  excludedMonths?: string[];               // Meses pulados: ["YYYY-MM"]
-  paidMonths?: string[];                   // Meses em que foi marcada como paga
-  kind?: "expense" | "income";            // Padrão: "expense"
+  type: "fixed" | "one-time";
+  fixedMode?: "unlimited" | "installments";
+  installments?: number;
+  dueDate?: string;          // YYYY-MM-DD
+  endDate?: string;          // YYYY-MM (last month, inclusive)
+  excludedMonths?: string[]; // ["YYYY-MM", ...]
+  paidMonths?: string[];     // ["YYYY-MM", ...]
+  kind?: "expense" | "income";
   categoryId?: string;
   subcategoryId?: string;
-  createdAt: string;                       // ISO timestamp
+  notes?: string;
+  attachments?: Attachment[];
+  createdAt: string;
 }
 ```
 
 ### `DisplayExpense` (`types/expense.ts`)
 
-Extends `Expense` com campos calculados para renderização:
+Extends `Expense` with computed fields for rendering:
 
 ```typescript
 interface DisplayExpense extends Expense {
-  displayValue: number;       // Para parcelas: value / installments
-  installmentInfo?: string;   // Ex: "3/10"
-  isPaid: boolean;            // Status no mês visualizado
-  isOverdue: boolean;         // Vencida e não paga
-  categoryLabel?: string;     // Ex: "Moradia > Aluguel"
+  displayValue: number;      // For installments: value / installments
+  installmentInfo?: string;  // e.g. "3/10"
+  isPaid: boolean;
+  isOverdue: boolean;
+  categoryLabel?: string;    // e.g. "Moradia > Aluguel"
 }
 ```
 
-### `Category` / `Subcategory` (`types/category.ts`)
+## Business Logic
 
-```typescript
-interface Subcategory { id: string; name: string; }
-interface Category   { id: string; name: string; subcategories: Subcategory[]; }
-```
+### Monthly filtering (`lib/expenseFilter.ts`)
 
-## Lógica de Negócio
+- **`one-time`**: shown only in the month of `dueDate`.
+- **`fixed / unlimited`**: shown from `dueDate` month onward until `endDate` (if set), skipping `excludedMonths`.
+- **`fixed / installments`**: shown for N months starting from `dueDate`. `displayValue` = `value / installments`.
 
-### Filtragem mensal (`app/page.tsx`)
+### Payment status
 
-A página principal filtra quais despesas aparecem para o mês visualizado (`viewMonth` / `viewYear`):
+- `isPaid`: the viewed month is in `paidMonths`.
+- `isOverdue`: `dueDate` is in the past AND `isPaid === false`.
 
-- **`one-time`**: aparece apenas no mês do `dueDate`.
-- **`fixed / unlimited`**: aparece a partir do mês do `dueDate` até o `endDate` (se definido), exceto meses em `excludedMonths`.
-- **`fixed / installments`**: aparece por N meses a partir do `dueDate`. O `displayValue` é `value / installments` e o `installmentInfo` indica a parcela atual (ex: "2/10").
+### Deleting recurring expenses (`DeleteConfirmModal`)
 
-### Status de pagamento
+Three strategies:
+1. **This month only** → adds month to `excludedMonths`.
+2. **This and all future** → sets `endDate` to the previous month.
+3. **All occurrences** → deletes the record entirely.
 
-- `isPaid`: o mês visualizado está em `paidMonths`.
-- `isOverdue`: `dueDate` anterior ao dia atual E `isPaid === false`.
-- Ao marcar como pago: o mês é adicionado/removido de `paidMonths` via `updateExpense`.
+### Editing recurring expenses (`EditScopeModal`)
 
-### Exclusão de despesas recorrentes (`DeleteConfirmModal`)
+Same three scopes. "This month" and "from here forward" create a one-time override and truncate the original.
 
-Três estratégias disponíveis:
-1. **Apenas este mês** → adiciona o mês a `excludedMonths`.
-2. **Este e todos os próximos** → define `endDate` como o mês anterior ao atual.
-3. **Todos os registros** → remove a despesa completamente.
+## Auth
 
-## Componentes
-
-| Componente | Responsabilidade |
-|---|---|
-| `Header` | Branding estático; suporte a dark mode |
-| `ExpenseList` | Renderiza array de `DisplayExpense`; exibe estado vazio |
-| `ExpenseCard` | Card com cor por status (verde=pago, vermelho=atrasado, teal=receita); toggle pago; badge de tipo; botão excluir |
-| `AddExpenseModal` | Formulário com modo despesa/receita; validação; suporte a vírgula como decimal (PT-BR) |
-| `ManageCategoriesModal` | CRUD de categorias e subcategorias (pills removíveis) |
-| `DeleteConfirmModal` | Três opções de exclusão contextuais para despesas recorrentes |
+- Registration: `POST /api/auth/register` — bcrypt hash, creates User, sets session cookie
+- Login: `POST /api/auth/login` — bcrypt compare, sets session cookie
+- Session: iron-session encrypted cookie (`dash-finance-session`)
+- All API routes check `session.userId`; return 401 if missing
 
 ## Hooks
 
-### `useExpenses` (`hooks/useExpenses.ts`)
+All hooks accept `userId` in their signature for call-site compatibility, but the parameter is ignored — auth is server-side.
 
 ```typescript
-const { expenses, addExpense, deleteExpense, updateExpense } = useExpenses();
+const { expenses, addExpense, deleteExpense, updateExpense } = useExpenses(user.userId);
+const { categories, addCategory, deleteCategory, addSubcategory, deleteSubcategory } = useCategories(user.userId);
+const { contributions, addContribution, deleteContribution } = useContributions(user.userId);
 ```
 
-- Chave localStorage: `"dash-finance-expenses"`
-- `addExpense` injeta `id` (UUID) e `createdAt` automaticamente.
-- `updateExpense(id, partial)` faz merge parcial (patch).
-
-### `useCategories` (`hooks/useCategories.ts`)
-
-```typescript
-const { categories, addCategory, deleteCategory, addSubcategory, deleteSubcategory } = useCategories();
-```
-
-- Chave localStorage: `"dash-finance-categories"`
-- `deleteCategory` remove a categoria e todas as subcategorias.
-
-## Persistência
-
-Toda a persistência é client-side via `localStorage`. Não há API, banco de dados ou sincronização entre dispositivos. Os dados vivem apenas no navegador local.
-
-| Chave | Conteúdo |
-|---|---|
-| `dash-finance-expenses` | `Expense[]` serializado em JSON |
-| `dash-finance-categories` | `Category[]` serializado em JSON |
-
-## Comandos
+## Commands
 
 ```bash
-npm run dev    # Servidor de desenvolvimento
-npm run build  # Build de produção
-npm run start  # Servidor de produção
+npm run dev          # Dev server
+npm run build        # Production build
+npm run start        # Production server
+npm run db:up        # docker compose up -d
+npm run db:migrate   # prisma migrate dev
+npm run db:generate  # prisma generate
+npm run db:studio    # Prisma Studio (visual DB browser)
 ```
