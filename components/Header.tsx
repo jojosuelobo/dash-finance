@@ -33,6 +33,16 @@ export default function Header() {
           >
             Relatório
           </Link>
+          <Link
+            href="/fundos"
+            className={`text-sm font-medium transition-colors ${
+              pathname === "/fundos"
+                ? "text-zinc-900 dark:text-zinc-50"
+                : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-50"
+            }`}
+          >
+            Fundos
+          </Link>
         </nav>
       </div>
     </header>
