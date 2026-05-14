@@ -189,8 +189,10 @@ export default function Relatorio() {
                   <YAxis tickFormatter={formatYAxis} tick={{ fontSize: 12, fill: "#71717a" }} axisLine={false} tickLine={false} width={48} />
                   <Tooltip
                     formatter={(value) => [formatBRL(Number(value)), ""]}
-                    contentStyle={{ borderRadius: 8, border: "1px solid #e4e4e7", fontSize: 13 }}
-                    cursor={{ fill: "#f4f4f5" }}
+                    contentStyle={{ borderRadius: 8, border: "1px solid #3f3f46", background: "#18181b", fontSize: 13 }}
+                    labelStyle={{ color: "#e4e4e7" }}
+                    itemStyle={{ color: "#e4e4e7" }}
+                    cursor={{ fill: "rgba(255,255,255,0.05)" }}
                   />
                   <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                     {comparisonData.map((_, i) => (
@@ -226,7 +228,9 @@ export default function Relatorio() {
                     </Pie>
                     <Tooltip
                       formatter={(value) => [formatBRL(Number(value)), ""]}
-                      contentStyle={{ borderRadius: 8, border: "1px solid #e4e4e7", fontSize: 13 }}
+                      contentStyle={{ borderRadius: 8, border: "1px solid #3f3f46", background: "#18181b", fontSize: 13 }}
+                      labelStyle={{ color: "#e4e4e7" }}
+                      itemStyle={{ color: "#e4e4e7" }}
                     />
                     <Legend
                       iconType="circle"

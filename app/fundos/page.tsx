@@ -65,9 +65,9 @@ function BubbleTooltip({ active, payload }: { active?: boolean; payload?: { payl
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs shadow-md dark:border-zinc-700 dark:bg-zinc-900">
-      <p className="font-medium text-zinc-800 dark:text-zinc-100">{d.label}</p>
-      <p className="text-zinc-500 dark:text-zinc-400">{formatBRL(d.z)}</p>
+    <div className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs shadow-md">
+      <p className="font-medium text-zinc-100">{d.label}</p>
+      <p className="text-zinc-400">{formatBRL(d.z)}</p>
     </div>
   );
 }
@@ -176,8 +176,10 @@ export default function Fundos() {
                   <YAxis tickFormatter={formatYAxis} tick={{ fontSize: 12, fill: "#71717a" }} axisLine={false} tickLine={false} width={44} />
                   <Tooltip
                     formatter={(v, name) => [formatBRL(Number(v)), name === "retirada" ? "Retirada" : TYPE_LABEL[name as ContributionType]]}
-                    contentStyle={{ borderRadius: 8, border: "1px solid #e4e4e7", fontSize: 13 }}
-                    cursor={{ fill: "#f4f4f5" }}
+                    contentStyle={{ borderRadius: 8, border: "1px solid #3f3f46", background: "#18181b", fontSize: 13 }}
+                    labelStyle={{ color: "#e4e4e7" }}
+                    itemStyle={{ color: "#e4e4e7" }}
+                    cursor={{ fill: "rgba(255,255,255,0.05)" }}
                   />
                   <Legend
                     iconType="square"
