@@ -3,19 +3,19 @@
 import { useState, useEffect } from "react";
 import type { Contribution } from "@/types/contribution";
 
-const STORAGE_KEY = "dash-finance-contributions";
-
-export function useContributions() {
+export function useContributions(userId: string) {
+  const storageKey = `dash-finance-contributions-${userId}`;
   const [contributions, setContributions] = useState<Contribution[]>([]);
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(storageKey);
       if (stored) setContributions(JSON.parse(stored));
+      else setContributions([]);
     } catch {
       // ignore malformed storage
     }
-  }, []);
+  }, [storageKey]);
 
   function addContribution(data: Omit<Contribution, "id" | "createdAt">) {
     const contribution: Contribution = {
@@ -25,7 +25,7 @@ export function useContributions() {
     };
     setContributions((prev) => {
       const next = [contribution, ...prev];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
   }
@@ -33,7 +33,7 @@ export function useContributions() {
   function deleteContribution(id: string) {
     setContributions((prev) => {
       const next = prev.filter((c) => c.id !== id);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
   }

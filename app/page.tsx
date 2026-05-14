@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
+import { useAuth } from "@/contexts/AuthContext";
 import ExpenseList from "@/components/ExpenseList";
 import AddExpenseModal from "@/components/AddExpenseModal";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
@@ -25,6 +26,7 @@ function nextMonth(month: number, year: number) {
 }
 
 export default function Home() {
+  const { user } = useAuth();
   const now = new Date();
   const [viewMonth, setViewMonth] = useState(now.getMonth());
   const [viewYear, setViewYear] = useState(now.getFullYear());
@@ -37,8 +39,8 @@ export default function Home() {
     formData: Omit<Expense, "id" | "createdAt">;
   } | null>(null);
 
-  const { expenses, addExpense, deleteExpense, updateExpense } = useExpenses();
-  const { categories, addCategory, deleteCategory, addSubcategory, deleteSubcategory } = useCategories();
+  const { expenses, addExpense, deleteExpense, updateExpense } = useExpenses(user!.userId);
+  const { categories, addCategory, deleteCategory, addSubcategory, deleteSubcategory } = useCategories(user!.userId);
 
   const viewIdx = viewYear * 12 + viewMonth;
 

@@ -9,6 +9,7 @@ import {
 import { useContributions } from "@/hooks/useContributions";
 import AddContributionModal from "@/components/AddContributionModal";
 import type { ContributionType } from "@/types/contribution";
+import { useAuth } from "@/contexts/AuthContext";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -75,7 +76,8 @@ function BubbleTooltip({ active, payload }: { active?: boolean; payload?: { payl
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function Fundos() {
-  const { contributions, addContribution, deleteContribution } = useContributions();
+  const { user } = useAuth();
+  const { contributions, addContribution, deleteContribution } = useContributions(user!.userId);
   const [addOpen, setAddOpen] = useState(false);
 
   // ── totals ──────────────────────────────────────────────────────────────────

@@ -3,19 +3,19 @@
 import { useState, useEffect } from "react";
 import type { Expense } from "@/types/expense";
 
-const STORAGE_KEY = "dash-finance-expenses";
-
-export function useExpenses() {
+export function useExpenses(userId: string) {
+  const storageKey = `dash-finance-expenses-${userId}`;
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(storageKey);
       if (stored) setExpenses(JSON.parse(stored));
+      else setExpenses([]);
     } catch {
       // ignore malformed storage
     }
-  }, []);
+  }, [storageKey]);
 
   function addExpense(data: Omit<Expense, "id" | "createdAt">) {
     const expense: Expense = {
@@ -25,7 +25,7 @@ export function useExpenses() {
     };
     setExpenses((prev) => {
       const next = [expense, ...prev];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
   }
@@ -33,7 +33,7 @@ export function useExpenses() {
   function deleteExpense(id: string) {
     setExpenses((prev) => {
       const next = prev.filter((e) => e.id !== id);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
   }
@@ -41,7 +41,7 @@ export function useExpenses() {
   function updateExpense(id: string, updates: Partial<Expense>) {
     setExpenses((prev) => {
       const next = prev.map((e) => (e.id === id ? { ...e, ...updates } : e));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
   }

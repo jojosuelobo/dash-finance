@@ -17,6 +17,7 @@ import {
 import { useExpenses } from "@/hooks/useExpenses";
 import { useCategories } from "@/hooks/useCategories";
 import { getDisplayExpenses } from "@/lib/expenseFilter";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MONTHS = [
   "JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO",
@@ -47,12 +48,13 @@ function formatYAxis(value: number): string {
 }
 
 export default function Relatorio() {
+  const { user } = useAuth();
   const now = new Date();
   const [viewMonth, setViewMonth] = useState(now.getMonth());
   const [viewYear, setViewYear] = useState(now.getFullYear());
 
-  const { expenses } = useExpenses();
-  const { categories } = useCategories();
+  const { expenses } = useExpenses(user!.userId);
+  const { categories } = useCategories(user!.userId);
 
   const displayExpenses = getDisplayExpenses(expenses, categories, viewYear, viewMonth, now);
 

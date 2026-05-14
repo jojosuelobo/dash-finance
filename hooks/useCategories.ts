@@ -3,22 +3,22 @@
 import { useState, useEffect } from "react";
 import type { Category } from "@/types/category";
 
-const STORAGE_KEY = "dash-finance-categories";
-
-export function useCategories() {
+export function useCategories(userId: string) {
+  const storageKey = `dash-finance-categories-${userId}`;
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(storageKey);
       if (stored) setCategories(JSON.parse(stored));
+      else setCategories([]);
     } catch {
       // ignore malformed storage
     }
-  }, []);
+  }, [storageKey]);
 
   function persist(next: Category[]) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    localStorage.setItem(storageKey, JSON.stringify(next));
     setCategories(next);
   }
 
