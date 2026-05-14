@@ -9,6 +9,7 @@ import AddCreditCardModal from "@/components/AddCreditCardModal";
 import AddCreditCardChargeModal from "@/components/AddCreditCardChargeModal";
 import ManageCreditCardCategoriesModal from "@/components/ManageCreditCardCategoriesModal";
 import type { CreditCard, CreditCardCharge } from "@/types/creditCard";
+import { computeInstallmentStatus } from "@/lib/creditCardFilter";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -26,14 +27,21 @@ function monthlyValue(charge: CreditCardCharge): number {
   return charge.value;
 }
 
-function isInstallmentDone(charge: CreditCardCharge): boolean {
-  if (charge.type !== "parcelado") return false;
-  return (charge.currentInstallment ?? 0) >= (charge.installments ?? 1);
+function installmentStatus(charge: CreditCardCharge, card?: CreditCard) {
+  if (charge.type !== "parcelado" || !charge.installments || !card?.dueDay) {
+    return { currentInstallment: 1, isDone: false };
+  }
+  return computeInstallmentStatus(
+    charge.startDate,
+    charge.installments,
+    card.dueDay,
+    card.closingDay
+  );
 }
 
-function isEffectivelyActive(charge: CreditCardCharge): boolean {
+function isEffectivelyActive(charge: CreditCardCharge, card?: CreditCard): boolean {
   if (charge.type === "assinatura") return charge.active;
-  if (charge.type === "parcelado") return !isInstallmentDone(charge);
+  if (charge.type === "parcelado") return !installmentStatus(charge, card).isDone;
   return true;
 }
 
@@ -157,11 +165,11 @@ export default function CartaoPage() {
   const oneTime       = filtered.filter((c) => c.type === "avulso");
 
   const monthlyTotal = useMemo(
-    () => filtered.filter(isEffectivelyActive).reduce((sum, c) => sum + monthlyValue(c), 0),
-    [filtered]
+    () => filtered.filter((c) => isEffectivelyActive(c, cards.find((card) => card.id === c.cardId))).reduce((sum, c) => sum + monthlyValue(c), 0),
+    [filtered, cards]
   );
   const activeSubscriptions = subscriptions.filter((c) => c.active).length;
-  const activeInstallments  = installments.filter((c) => !isInstallmentDone(c)).length;
+  const activeInstallments  = installments.filter((c) => !installmentStatus(c, cards.find((card) => card.id === c.cardId)).isDone).length;
 
   function categoryLabel(charge: CreditCardCharge): string {
     if (!charge.categoryId) return "";
@@ -178,8 +186,8 @@ export default function CartaoPage() {
   function ChargeRow({ charge }: { charge: CreditCardCharge }) {
     const card = cards.find((c) => c.id === charge.cardId);
     const catLabel = categoryLabel(charge);
-    const done = isInstallmentDone(charge);
-    const active = isEffectivelyActive(charge);
+    const { currentInstallment, isDone } = installmentStatus(charge, card);
+    const active = isEffectivelyActive(charge, card);
     const monthly = monthlyValue(charge);
 
     return (
@@ -195,8 +203,8 @@ export default function CartaoPage() {
               </span>
             )}
             {charge.type === "parcelado" && (
-              <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${done ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400" : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"}`}>
-                {charge.currentInstallment ?? 1}/{charge.installments ?? 1}{done ? " — quitado" : ""}
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${isDone ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400" : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"}`}>
+                {currentInstallment}/{charge.installments ?? 1}{isDone ? " — quitado" : ""}
               </span>
             )}
           </div>

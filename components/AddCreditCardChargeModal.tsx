@@ -55,7 +55,6 @@ export default function AddCreditCardChargeModal({ cards, categories, initialCha
   const [startDate, setStartDate] = useState(initialCharge?.startDate ?? today);
   const [endDate, setEndDate] = useState(initialCharge?.endDate ?? "");
   const [installments, setInstallments] = useState(initialCharge?.installments ? String(initialCharge.installments) : "");
-  const [currentInstallment, setCurrentInstallment] = useState(initialCharge?.currentInstallment ? String(initialCharge.currentInstallment) : "1");
   const [active, setActive] = useState(initialCharge?.active ?? true);
   const [notes, setNotes] = useState(initialCharge?.notes ?? "");
   const [error, setError] = useState("");
@@ -72,11 +71,13 @@ export default function AddCreditCardChargeModal({ cards, categories, initialCha
     if (!startDate) { setError("Informe a data de início."); return; }
 
     const parsedInstallments = type === "parcelado" ? parseInt(installments) : undefined;
-    const parsedCurrent = type === "parcelado" ? parseInt(currentInstallment) : undefined;
     if (type === "parcelado") {
+      const selectedCard = cards.find((c) => c.id === cardId);
+      if (!selectedCard?.dueDay) {
+        setError("Este cartão não tem dia de vencimento. Cadastre o vencimento no cartão antes de adicionar parcelamentos.");
+        return;
+      }
       if (!parsedInstallments || parsedInstallments < 1) { setError("Informe o número de parcelas."); return; }
-      if (!parsedCurrent || parsedCurrent < 1) { setError("Informe a parcela atual."); return; }
-      if (parsedCurrent > parsedInstallments) { setError("Parcela atual não pode ser maior que o total."); return; }
     }
 
     onSave({
@@ -85,7 +86,6 @@ export default function AddCreditCardChargeModal({ cards, categories, initialCha
       value: parsedValue,
       type,
       installments: parsedInstallments,
-      currentInstallment: parsedCurrent,
       startDate,
       endDate: (type === "assinatura" && endDate) ? endDate : undefined,
       categoryId: categoryId || undefined,
@@ -168,29 +168,17 @@ export default function AddCreditCardChargeModal({ cards, categories, initialCha
 
             {/* Parcelas (parcelado) */}
             {type === "parcelado" && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">Total de parcelas</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={installments}
-                    onChange={(e) => setInstallments(e.target.value)}
-                    placeholder="12"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">Parcela atual</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={currentInstallment}
-                    onChange={(e) => setCurrentInstallment(e.target.value)}
-                    placeholder="1"
-                    className={inputClass}
-                  />
-                </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">Número de parcelas</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={installments}
+                  onChange={(e) => setInstallments(e.target.value)}
+                  placeholder="12"
+                  className={inputClass}
+                />
+                <p className="mt-1 text-xs text-zinc-400">A parcela atual é calculada automaticamente pelo dia de vencimento do cartão.</p>
               </div>
             )}
 

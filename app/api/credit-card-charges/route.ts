@@ -5,7 +5,7 @@ import type { CreditCardCharge } from "@/types/creditCard";
 
 function toCharge(row: {
   id: string; cardId: string; name: string; value: number;
-  type: string; installments: number | null; currentInstallment: number | null;
+  type: string; installments: number | null;
   startDate: string; endDate: string | null; categoryId: string | null;
   subcategoryId: string | null; notes: string | null; active: boolean; createdAt: Date;
 }): CreditCardCharge {
@@ -16,7 +16,6 @@ function toCharge(row: {
     value: row.value,
     type: row.type as CreditCardCharge["type"],
     installments: row.installments ?? undefined,
-    currentInstallment: row.currentInstallment ?? undefined,
     startDate: row.startDate,
     endDate: row.endDate ?? undefined,
     categoryId: row.categoryId ?? undefined,
@@ -58,7 +57,6 @@ export async function POST(request: Request) {
       value: data.value,
       type: data.type,
       installments: data.installments ?? null,
-      currentInstallment: data.currentInstallment ?? null,
       startDate: data.startDate,
       endDate: data.endDate ?? null,
       categoryId: data.categoryId ?? null,

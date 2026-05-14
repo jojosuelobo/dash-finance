@@ -17,7 +17,6 @@ export interface CreditCardCharge {
   value: number;
   type: CreditCardChargeType;
   installments?: number;
-  currentInstallment?: number;
   startDate: string;
   endDate?: string;
   categoryId?: string;
