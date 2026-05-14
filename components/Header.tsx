@@ -45,6 +45,16 @@ export default function Header() {
           >
             Fundos
           </Link>
+          <Link
+            href="/cartao"
+            className={`text-sm font-medium transition-colors ${
+              pathname === "/cartao"
+                ? "text-zinc-900 dark:text-zinc-50"
+                : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-50"
+            }`}
+          >
+            Cartão
+          </Link>
         </nav>
         {user && (
           <div className="ml-auto flex items-center gap-3">

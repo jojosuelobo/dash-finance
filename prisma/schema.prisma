@@ -7,13 +7,16 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  username      String         @unique
-  passwordHash  String
-  createdAt     DateTime       @default(now())
-  expenses      Expense[]
-  categories    Category[]
-  contributions Contribution[]
+  id                   String                @id @default(uuid())
+  username             String                @unique
+  passwordHash         String
+  createdAt            DateTime              @default(now())
+  expenses             Expense[]
+  categories           Category[]
+  contributions        Contribution[]
+  creditCards          CreditCard[]
+  creditCardCategories CreditCardCategory[]
+  creditCardCharges    CreditCardCharge[]
 }
 
 enum ExpenseType {
@@ -96,4 +99,59 @@ model Contribution {
   quantidade Float?
   cotacao    Float?
   createdAt  DateTime             @default(now())
+}
+
+enum CreditCardChargeType {
+  assinatura
+  parcelado
+  avulso
+}
+
+model CreditCard {
+  id         String             @id @default(uuid())
+  userId     String
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  bank       String
+  closingDay Int?
+  dueDay     Int?
+  color      String?
+  charges    CreditCardCharge[]
+  createdAt  DateTime           @default(now())
+}
+
+model CreditCardCategory {
+  id            String                  @id @default(uuid())
+  userId        String
+  user          User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  subcategories CreditCardSubcategory[]
+  createdAt     DateTime                @default(now())
+}
+
+model CreditCardSubcategory {
+  id         String             @id @default(uuid())
+  categoryId String
+  category   CreditCardCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name       String
+}
+
+model CreditCardCharge {
+  id                 String               @id @default(uuid())
+  userId             String
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardId             String
+  card               CreditCard           @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  name               String
+  value              Float
+  type               CreditCardChargeType
+  installments       Int?
+  currentInstallment Int?
+  startDate          String
+  endDate            String?
+  categoryId         String?
+  subcategoryId      String?
+  notes              String?
+  active             Boolean              @default(true)
+  createdAt          DateTime             @default(now())
 }
