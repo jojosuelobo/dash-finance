@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(uuid())
+  username      String         @unique
+  passwordHash  String
+  createdAt     DateTime       @default(now())
+  expenses      Expense[]
+  categories    Category[]
+  contributions Contribution[]
+}
+
+enum ExpenseType {
+  fixed
+  one_time
+}
+
+enum FixedMode {
+  unlimited
+  installments
+}
+
+enum ExpenseKind {
+  expense
+  income
+}
+
+model Expense {
+  id             String      @id @default(uuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  value          Float
+  type           ExpenseType
+  fixedMode      FixedMode?
+  installments   Int?
+  dueDate        String?
+  endDate        String?
+  excludedMonths String[]    @default([])
+  paidMonths     String[]    @default([])
+  kind           ExpenseKind @default(expense)
+  categoryId     String?
+  subcategoryId  String?
+  notes          String?
+  attachments    Json        @default("[]")
+  createdAt      DateTime    @default(now())
+}
+
+model Category {
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  subcategories Subcategory[]
+  createdAt     DateTime      @default(now())
+}
+
+model Subcategory {
+  id         String   @id @default(uuid())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name       String
+}
+
+enum ContributionKind {
+  aporte
+  retirada
+}
+
+enum ContributionType {
+  cripto
+  investimento
+}
+
+enum ContributionSubtype {
+  bitcoin
+  etc
+  outros
+}
+
+model Contribution {
+  id         String               @id @default(uuid())
+  userId     String
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date       String
+  value      Float
+  kind       ContributionKind
+  type       ContributionType
+  subtype    ContributionSubtype?
+  quantidade Float?
+  cotacao    Float?
+  createdAt  DateTime             @default(now())
+}

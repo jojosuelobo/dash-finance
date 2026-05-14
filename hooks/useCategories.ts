@@ -3,46 +3,52 @@
 import { useState, useEffect } from "react";
 import type { Category } from "@/types/category";
 
-export function useCategories(userId: string) {
-  const storageKey = `dash-finance-categories-${userId}`;
+// userId is kept in signature for call-site compatibility but auth is handled server-side
+export function useCategories(_userId: string) {
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored) setCategories(JSON.parse(stored));
-      else setCategories([]);
-    } catch {
-      // ignore malformed storage
-    }
-  }, [storageKey]);
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setCategories(data); })
+      .catch(() => {});
+  }, []);
 
-  function persist(next: Category[]) {
-    localStorage.setItem(storageKey, JSON.stringify(next));
-    setCategories(next);
+  async function addCategory(name: string) {
+    const res = await fetch("/api/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    const category: Category = await res.json();
+    setCategories((prev) => [...prev, category]);
   }
 
-  function addCategory(name: string) {
-    persist([...categories, { id: crypto.randomUUID(), name: name.trim(), subcategories: [] }]);
+  async function deleteCategory(id: string) {
+    await fetch(`/api/categories/${id}`, { method: "DELETE" });
+    setCategories((prev) => prev.filter((c) => c.id !== id));
   }
 
-  function deleteCategory(id: string) {
-    persist(categories.filter((c) => c.id !== id));
-  }
-
-  function addSubcategory(categoryId: string, name: string) {
-    persist(
-      categories.map((c) =>
-        c.id === categoryId
-          ? { ...c, subcategories: [...c.subcategories, { id: crypto.randomUUID(), name: name.trim() }] }
-          : c
+  async function addSubcategory(categoryId: string, name: string) {
+    const res = await fetch(`/api/categories/${categoryId}/subcategories`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    const sub = await res.json();
+    setCategories((prev) =>
+      prev.map((c) =>
+        c.id === categoryId ? { ...c, subcategories: [...c.subcategories, sub] } : c
       )
     );
   }
 
-  function deleteSubcategory(categoryId: string, subcategoryId: string) {
-    persist(
-      categories.map((c) =>
+  async function deleteSubcategory(categoryId: string, subcategoryId: string) {
+    await fetch(`/api/categories/${categoryId}/subcategories/${subcategoryId}`, {
+      method: "DELETE",
+    });
+    setCategories((prev) =>
+      prev.map((c) =>
         c.id === categoryId
           ? { ...c, subcategories: c.subcategories.filter((s) => s.id !== subcategoryId) }
           : c

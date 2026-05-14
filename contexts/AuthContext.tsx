@@ -1,17 +1,12 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import {
-  hashPassword,
-  getAllUsers,
-  createUser,
-  findUserByUsername,
-  getSession,
-  saveSession,
-  clearSession,
-} from "@/lib/auth";
-import type { Session } from "@/lib/auth";
 import LoginForm from "@/components/LoginForm";
+
+interface Session {
+  userId: string;
+  username: string;
+}
 
 interface AuthContextValue {
   user: Session | null;
@@ -34,54 +29,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const session = getSession();
-    setUser(session);
-    setIsLoading(false);
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => setUser(data))
+      .catch(() => setUser(null))
+      .finally(() => setIsLoading(false));
   }, []);
 
-  async function login(
-    username: string,
-    password: string
-  ): Promise<"ok" | "invalid-credentials"> {
-    const found = findUserByUsername(username);
-    if (!found) return "invalid-credentials";
-    const hash = await hashPassword(password);
-    if (hash !== found.passwordHash) return "invalid-credentials";
-    const session: Session = { userId: found.id, username: found.username };
-    saveSession(session);
-    setUser(session);
+  async function login(username: string, password: string): Promise<"ok" | "invalid-credentials"> {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) return "invalid-credentials";
+    const data = await res.json();
+    setUser({ userId: data.userId, username: data.username });
     return "ok";
   }
 
-  async function register(
-    username: string,
-    password: string
-  ): Promise<"ok" | "username-taken"> {
-    const existing = findUserByUsername(username);
-    if (existing) return "username-taken";
-
-    const isFirstUser = getAllUsers().length === 0;
-    const hash = await hashPassword(password);
-    const newUser = createUser(username, hash);
-
-    if (isFirstUser) {
-      for (const suffix of ["expenses", "categories", "contributions"]) {
-        const old = localStorage.getItem(`dash-finance-${suffix}`);
-        if (old) {
-          localStorage.setItem(`dash-finance-${suffix}-${newUser.id}`, old);
-          localStorage.removeItem(`dash-finance-${suffix}`);
-        }
-      }
-    }
-
-    const session: Session = { userId: newUser.id, username: newUser.username };
-    saveSession(session);
-    setUser(session);
+  async function register(username: string, password: string): Promise<"ok" | "username-taken"> {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    if (res.status === 409) return "username-taken";
+    if (!res.ok) return "username-taken";
+    const data = await res.json();
+    setUser({ userId: data.userId, username: data.username });
     return "ok";
   }
 
-  function logout() {
-    clearSession();
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
   }
 

@@ -3,39 +3,30 @@
 import { useState, useEffect } from "react";
 import type { Contribution } from "@/types/contribution";
 
-export function useContributions(userId: string) {
-  const storageKey = `dash-finance-contributions-${userId}`;
+// userId is kept in signature for call-site compatibility but auth is handled server-side
+export function useContributions(_userId: string) {
   const [contributions, setContributions] = useState<Contribution[]>([]);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey);
-      if (stored) setContributions(JSON.parse(stored));
-      else setContributions([]);
-    } catch {
-      // ignore malformed storage
-    }
-  }, [storageKey]);
+    fetch("/api/contributions")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setContributions(data); })
+      .catch(() => {});
+  }, []);
 
-  function addContribution(data: Omit<Contribution, "id" | "createdAt">) {
-    const contribution: Contribution = {
-      ...data,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    setContributions((prev) => {
-      const next = [contribution, ...prev];
-      localStorage.setItem(storageKey, JSON.stringify(next));
-      return next;
+  async function addContribution(data: Omit<Contribution, "id" | "createdAt">) {
+    const res = await fetch("/api/contributions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
+    const contribution: Contribution = await res.json();
+    setContributions((prev) => [contribution, ...prev]);
   }
 
-  function deleteContribution(id: string) {
-    setContributions((prev) => {
-      const next = prev.filter((c) => c.id !== id);
-      localStorage.setItem(storageKey, JSON.stringify(next));
-      return next;
-    });
+  async function deleteContribution(id: string) {
+    await fetch(`/api/contributions/${id}`, { method: "DELETE" });
+    setContributions((prev) => prev.filter((c) => c.id !== id));
   }
 
   return { contributions, addContribution, deleteContribution };
