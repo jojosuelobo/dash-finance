@@ -124,7 +124,8 @@ export default function CalendarView({ expenses, viewYear, viewMonth, onTogglePa
   const rows = Math.ceil(totalCells / 7);
 
   return (
-    <div className="mt-4">
+    <div className="mt-4 overflow-x-auto">
+      <div className="min-w-[420px]">
       {/* Day-of-week headers */}
       <div className="grid grid-cols-7 mb-1">
         {DAY_HEADERS.map((h) => (
@@ -196,6 +197,7 @@ export default function CalendarView({ expenses, viewYear, viewMonth, onTogglePa
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

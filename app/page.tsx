@@ -259,21 +259,21 @@ export default function Home() {
       </div>
 
       {displayExpenses.length > 0 && (
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mt-4 grid grid-cols-3 gap-1.5 sm:gap-3">
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-2 sm:p-3 dark:border-zinc-800 dark:bg-zinc-900">
             <p className="text-xs text-zinc-400">Receitas</p>
             <p className="mt-0.5 text-sm font-semibold text-teal-600 dark:text-teal-400">
               {fmt(totalIncome)}
             </p>
           </div>
-          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-2 sm:p-3 dark:border-zinc-800 dark:bg-zinc-900">
             <p className="text-xs text-zinc-400">Despesas</p>
             <p className="mt-0.5 text-sm font-semibold text-red-500 dark:text-red-400">
               {fmt(totalExpenses)}
             </p>
           </div>
           <div
-            className={`rounded-lg border p-3 ${
+            className={`rounded-lg border p-2 sm:p-3 ${
               balance >= 0
                 ? "border-green-100 bg-green-50 dark:border-green-900/40 dark:bg-green-950/30"
                 : "border-red-100 bg-red-50 dark:border-red-900/40 dark:bg-red-950/30"

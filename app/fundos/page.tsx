@@ -138,7 +138,7 @@ export default function Fundos() {
       </div>
 
       {/* Summary cards */}
-      <div className="mt-4 grid grid-cols-3 gap-4">
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className={`rounded-xl border p-4 ${
           currentBalance >= 0
             ? "border-green-100 bg-green-50 dark:border-green-900/40 dark:bg-green-950/30"
@@ -236,8 +236,8 @@ export default function Fundos() {
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Movimentações
             </p>
-            <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+              <table className="w-full min-w-[640px] text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100 dark:border-zinc-800">
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-400">Data</th>

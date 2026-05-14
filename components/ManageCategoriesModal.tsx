@@ -115,7 +115,7 @@ export default function ManageCategoriesModal({
                       <button
                         onClick={() => onDeleteSubcategory(cat.id, sub.id)}
                         aria-label="Deletar subcategoria"
-                        className="flex h-4 w-4 items-center justify-center rounded-full text-zinc-400 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/40"
+                        className="flex h-5 w-5 items-center justify-center rounded-full text-zinc-400 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/40"
                       >
                         ×
                       </button>
@@ -138,13 +138,13 @@ export default function ManageCategoriesModal({
                   />
                   <button
                     onClick={() => handleAddSubcategory(cat.id)}
-                    className="rounded-lg bg-zinc-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900"
+                    className="rounded-lg bg-zinc-900 px-2.5 py-2 text-xs font-semibold text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900"
                   >
                     OK
                   </button>
                   <button
                     onClick={() => setAddingSubFor(null)}
-                    className="rounded-lg border border-zinc-200 px-2 py-1 text-xs text-zinc-500 hover:border-zinc-400 dark:border-zinc-700"
+                    className="rounded-lg border border-zinc-200 px-2 py-2 text-xs text-zinc-500 hover:border-zinc-400 dark:border-zinc-700"
                   >
                     ×
                   </button>
