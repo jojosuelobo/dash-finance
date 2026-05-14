@@ -9,6 +9,7 @@ import AddExpenseModal from "@/components/AddExpenseModal";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import EditScopeModal from "@/components/EditScopeModal";
 import ManageCategoriesModal from "@/components/ManageCategoriesModal";
+import CalendarView from "@/components/CalendarView";
 import { getDisplayExpenses, monthKey } from "@/lib/expenseFilter";
 import type { Expense } from "@/types/expense";
 
@@ -30,6 +31,7 @@ export default function Home() {
   const now = new Date();
   const [viewMonth, setViewMonth] = useState(now.getMonth());
   const [viewYear, setViewYear] = useState(now.getFullYear());
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [addOpen, setAddOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Expense | null>(null);
@@ -220,6 +222,29 @@ export default function Home() {
 
       <div className="mt-4 flex justify-end gap-2">
         <button
+          onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")}
+          aria-label={viewMode === "list" ? "Visualização calendário" : "Visualização lista"}
+          className="rounded-lg border border-zinc-200 p-2 text-zinc-600 hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:text-zinc-50"
+        >
+          {viewMode === "list" ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="8" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="3" y1="18" x2="3.01" y2="18" />
+            </svg>
+          )}
+        </button>
+        <button
           onClick={() => setCategoriesOpen(true)}
           className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 hover:border-zinc-400 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:text-zinc-50"
         >
@@ -306,37 +331,52 @@ export default function Home() {
         </p>
       )}
 
-      {incomeItems.length > 0 && (
-        <section>
-          {hasBothKinds && (
-            <h2 className="mt-6 mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Receitas
-            </h2>
-          )}
-          <ExpenseList
-            expenses={incomeItems}
-            onDelete={handleDelete}
+      {viewMode === "calendar" ? (
+        displayExpenses.length > 0 && (
+          <CalendarView
+            expenses={displayExpenses}
+            viewYear={viewYear}
+            viewMonth={viewMonth}
             onTogglePaid={handleTogglePaid}
             onEdit={handleEditOpen}
+            onDelete={handleDelete}
           />
-        </section>
-      )}
+        )
+      ) : (
+        <>
+          {incomeItems.length > 0 && (
+            <section>
+              {hasBothKinds && (
+                <h2 className="mt-6 mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  Receitas
+                </h2>
+              )}
+              <ExpenseList
+                expenses={incomeItems}
+                onDelete={handleDelete}
+                onTogglePaid={handleTogglePaid}
+                onEdit={handleEditOpen}
+              />
+            </section>
+          )}
 
-      {expenseItems.length > 0 && (
-        <section>
-          {hasBothKinds && (
-            <h2 className="mt-6 mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Despesas
-            </h2>
+          {expenseItems.length > 0 && (
+            <section>
+              {hasBothKinds && (
+                <h2 className="mt-6 mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  Despesas
+                </h2>
+              )}
+              <ExpenseList
+                expenses={expenseItems}
+                categories={categories}
+                onDelete={handleDelete}
+                onTogglePaid={handleTogglePaid}
+                onEdit={handleEditOpen}
+              />
+            </section>
           )}
-          <ExpenseList
-            expenses={expenseItems}
-            categories={categories}
-            onDelete={handleDelete}
-            onTogglePaid={handleTogglePaid}
-            onEdit={handleEditOpen}
-          />
-        </section>
+        </>
       )}
 
       {addOpen && (
