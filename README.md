@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dash Finance
 
-## Getting Started
+Dashboard pessoal para controle de despesas e receitas mês a mês. Suporte a múltiplos usuários, categorias, parcelas, despesas recorrentes e acompanhamento de investimentos.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS 4
+- PostgreSQL (Docker) + Prisma 7
+- iron-session (autenticação por cookie HTTP-only)
+
+## Setup
+
+**Pré-requisitos:** Node.js 18+, Docker
 
 ```bash
+# 1. Instalar dependências
+npm install
+
+# 2. Subir o banco de dados
+docker compose up -d
+
+# 3. Aplicar a migration
+npm run db:migrate
+
+# 4. Rodar o projeto
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000) e crie sua conta.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variáveis de ambiente
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copie `.env.example` para `.env` e ajuste se necessário:
 
-## Learn More
+```env
+DATABASE_URL=postgresql://dash:dash@localhost:5433/dash_finance
+SESSION_SECRET=chave-aleatoria-com-minimo-32-caracteres
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Banco de dados
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Campo | Valor |
+|---|---|
+| Host | `localhost` |
+| Porta | `5433` |
+| Database | `dash_finance` |
+| Usuário | `dash` |
+| Senha | `dash` |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run db:studio   # Prisma Studio (interface visual)
+npm run db:migrate  # Aplicar novas migrations
+```
 
-## Deploy on Vercel
+## Licença
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT © Josue Lobo
