@@ -35,7 +35,8 @@ function installmentStatus(charge: CreditCardCharge, card?: CreditCard) {
     charge.startDate,
     charge.installments,
     card.dueDay,
-    card.closingDay
+    card.closingDay,
+    charge.startInstallment ?? 1
   );
 }
 

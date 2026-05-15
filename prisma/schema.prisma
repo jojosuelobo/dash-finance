@@ -146,6 +146,7 @@ model CreditCardCharge {
   value              Float
   type               CreditCardChargeType
   installments       Int?
+  startInstallment   Int?
   startDate          String
   endDate            String?
   categoryId         String?

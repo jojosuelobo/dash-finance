@@ -21,6 +21,7 @@ export async function PATCH(
       ...(data.value !== undefined && { value: data.value }),
       ...(data.type !== undefined && { type: data.type }),
       ...(data.installments !== undefined && { installments: data.installments ?? null }),
+      ...(data.startInstallment !== undefined && { startInstallment: data.startInstallment ?? null }),
       ...(data.startDate !== undefined && { startDate: data.startDate }),
       ...(data.endDate !== undefined && { endDate: data.endDate ?? null }),
       ...(data.categoryId !== undefined && { categoryId: data.categoryId ?? null }),
@@ -33,6 +34,7 @@ export async function PATCH(
   return NextResponse.json({
     id: row.id, cardId: row.cardId, name: row.name, value: row.value,
     type: row.type, installments: row.installments ?? undefined,
+    startInstallment: row.startInstallment ?? undefined,
     startDate: row.startDate, endDate: row.endDate ?? undefined,
     categoryId: row.categoryId ?? undefined, subcategoryId: row.subcategoryId ?? undefined,
     notes: row.notes ?? undefined, active: row.active,

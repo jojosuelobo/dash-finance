@@ -7,6 +7,7 @@ export function computeInstallmentStatus(
   totalInstallments: number,
   dueDay: number,
   closingDay?: number,
+  startInstallment: number = 1,
   today: Date = new Date()
 ): { currentInstallment: number; isDone: boolean } {
   const [purchaseYear, purchaseMonth, purchaseDay] = startDate.split("-").map(Number);
@@ -47,10 +48,10 @@ export function computeInstallmentStatus(
     paymentsMade = monthsElapsed;
   }
 
-  paymentsMade = Math.max(0, Math.min(paymentsMade, totalInstallments));
+  paymentsMade = Math.max(0, paymentsMade);
 
-  const isDone = paymentsMade >= totalInstallments;
-  const currentInstallment = isDone ? totalInstallments : paymentsMade + 1;
+  const currentInstallment = Math.min(startInstallment + paymentsMade, totalInstallments);
+  const isDone = startInstallment + paymentsMade > totalInstallments;
 
   return { currentInstallment, isDone };
 }
