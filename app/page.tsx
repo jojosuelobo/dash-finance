@@ -220,7 +220,7 @@ export default function Home() {
         </button>
       </div>
 
-      <div className="mt-4 flex justify-end gap-2">
+      <div className="mt-4 flex justify-center gap-2 sm:justify-end">
         <button
           onClick={() => setViewMode(viewMode === "list" ? "calendar" : "list")}
           aria-label={viewMode === "list" ? "Visualização calendário" : "Visualização lista"}

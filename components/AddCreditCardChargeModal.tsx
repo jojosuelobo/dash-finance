@@ -104,7 +104,7 @@ export default function AddCreditCardChargeModal({ cards, categories, initialCha
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="flex w-full max-w-sm flex-col rounded-xl bg-white shadow-xl dark:bg-zinc-900" style={{ maxHeight: "92vh" }}>
-        <div className="overflow-y-auto px-6 py-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-50">
             {initialCharge ? "Editar cobrança" : "Nova cobrança"}
           </h2>
